@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.lang.reflect.Method;
+
 public class Analyser {
 
     /* 
@@ -24,6 +26,7 @@ public class Analyser {
     public ArrayList<String> longClassMediumAL = new ArrayList<>();
     public ArrayList<String> longMethodMediumAL = new ArrayList<>();
     */
+    static CheckBadSmells checker = new CheckBadSmells();
 
     public static void main(String[] args) throws Exception {
         FileInputStream in = new FileInputStream("test_classes\\Bloaters\\Grid.java");
@@ -35,7 +38,14 @@ public class Analyser {
             in.close();
         }
 
-        new ClassDiagramVisitor().visit(cu, null);
+        new ClassDiagramVisitor().visit(cu, checker);
+        
+        for(Method m : checker.getClass().getMethods()){
+            if (m.getParameterCount() == 0){
+                 m.invoke(checker);
+            }
+        }
+
 
         /*
         VoidVisitor<Void> methodNameVisitor = new MethodNamePrinter();
@@ -53,32 +63,25 @@ public class Analyser {
     private static class ClassDiagramVisitor extends VoidVisitorAdapter {
 
         public void visit(ClassOrInterfaceDeclaration visitingClass, Object arg){
-            
-            //Check class length(easy)
-            int classLength = visitingClass.getEnd().get().line - visitingClass.getBegin().get().line;
-            if (classLength > 100){
-                System.out.println("BAD SMELL ("+ visitingClass.getNameAsString() +") - Long Class (easy)");
-            }
 
+            checker.addDeclaration(visitingClass);
             super.visit(visitingClass, arg);
         }
 
         public void visit(MethodDeclaration visitingMethod, Object arg) {
 
-            //Check method length(easy)
-            int methodLength = visitingMethod.getEnd().get().line - visitingMethod.getBegin().get().line;
-            if (methodLength > 20){
-                System.out.println("BAD SMELL ("+ visitingMethod.getNameAsString() +") - Long Method (easy)");
+            checker.addDeclaration(visitingMethod);
+            super.visit(visitingMethod, arg);
             }
 
-            //Check parameter list
-            if(visitingMethod.getParameters().size() >= 5){
-                System.out.println("BAD SMELL ("+ visitingMethod.getNameAsString() +") - Long Paramteter List");
-            }
-
+        public void visit(FieldDeclaration visitingClass, Object arg){
+            ArrayList<VariableDeclarator> variables = new ArrayList<>();
+            for(VariableDeclarator v : visitingClass.getVariables()){
+                variables.add(v);
             }
         }
 
+    }
 
 
 
