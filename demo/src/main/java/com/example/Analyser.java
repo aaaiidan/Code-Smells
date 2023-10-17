@@ -3,12 +3,13 @@ package com.example;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.visitor.GenericListVisitorAdapter;
 import com.github.javaparser.ast.visitor.VoidVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
-
-
+import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.Statement;
 
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -40,11 +41,11 @@ public class Analyser {
 
         new ClassDiagramVisitor().visit(cu, checker);
         
-        for(Method m : checker.getClass().getMethods()){
-            if (m.getParameterCount() == 0){
-                 m.invoke(checker);
-            }
-        }
+        checker.largeClassEasy();
+        checker.longParameterList();
+        checker.longMethodEasy();
+        checker.longMethodMedium();
+        checker.longClassMedium();
 
 
         /*
@@ -75,22 +76,12 @@ public class Analyser {
             }
 
         public void visit(FieldDeclaration visitingClass, Object arg){
-            ArrayList<VariableDeclarator> variables = new ArrayList<>();
+
             for(VariableDeclarator v : visitingClass.getVariables()){
-                variables.add(v);
+                checker.addDeclaration(v);
             }
         }
-
     }
-
-
-
-
-
-
-
-
-
 
 /* 
     private static class MethodNamePrinter extends VoidVisitorAdapter<Void> {

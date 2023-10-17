@@ -54,7 +54,7 @@ class Grid {
         points = new int[50][50];
         minC = minR = 0;
         maxC = maxR = 50;
-        newGame();
+        newGame(); //22
     }
 
     final void newGame() {
@@ -84,7 +84,7 @@ class Grid {
         // grid
         g.setColor(Color.lightGray);
 
-        int x = (centerX - halfCell) % cellSize;
+        int x = (centerX - halfCell) % cellSize;//40
         int y = (centerY - halfCell) % cellSize;
 
         for (int i = 0; i <= w / cellSize; i++)
@@ -143,7 +143,7 @@ class Grid {
         if (candidates.size() > 0) {
             Choice choice = candidates.get(0);
             addLine(choice.points, choice.dir);
-            return Result.GOOD;
+            return Result.GOOD; //80
         }
         return Result.BAD;
     }
@@ -177,7 +177,7 @@ class Grid {
         if (points[r][c] != EMPTY || choices.size() > 0)
             return Result.BAD;
 
-        checkLines(r, c);
+        checkLines(r, c);//100
 
         if (candidates.size() == 1) {
             Choice choice = candidates.get(0);
@@ -197,7 +197,7 @@ class Grid {
             return Result.UGLY;
         }
 
-        return Result.BAD;
+        return Result.BAD; //115
     }
 
     void checkLine(int dir, int end, int r, int c, int rIncr, int cIncr) {
