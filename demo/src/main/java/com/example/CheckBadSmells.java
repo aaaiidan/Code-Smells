@@ -126,4 +126,23 @@ public class CheckBadSmells {
 
         }
     }
+
+    public void messageChain() {
+        for (MethodDeclaration m : allMethods) {
+            int messageChainLength = getMessageChainLength(m.getBody().get(), 0);
+            if (messageChainLength > 2) {
+                System.out.println("BAD SMELL (" + m.getNameAsString() + ") - Message Chain");
+            }
+        }
+    }
+
+    private int getMessageChainLength(Node node, int chainC) {
+        if (node instanceof MethodCallExpr) {
+            chainC++;
+        }
+        for (Node child : node.getChildNodes()) {
+            chainC = getMessageChainLength(child, chainC);
+        }
+        return chainC;
+    }
 }
