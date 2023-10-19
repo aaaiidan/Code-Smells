@@ -167,7 +167,7 @@ public class CheckBadSmells {
                     isDataClass = false;
                 }
 
-                if((statement instanceof IfStmt) || (statement instanceof ForStmt) || (statement instanceof WhileStmt)){
+                if((statement instanceof IfStmt) || (statement instanceof ForStmt) || (statement instanceof WhileStmt) || (statement instanceof ForEachStatement){
                     hasComplexLogic = true;
                     isDataClass = false;
                 }else{
