@@ -175,7 +175,7 @@ public class CheckBadSmells {
                     if(!methodsNames.contains(m.getNameAsString())){
                         methodsNames.add(m.getNameAsString());
                     }
-                }
+                } //The code might actually work better without the complexity check and rather with just the expression statements and return statements.
             }
         }
 
