@@ -179,7 +179,7 @@ public class CheckBadSmells {
             }
         }
 
-        if(isDataClass == true){
+        if(isDataClass == true && hasComplexLogic == false){
             System.out.println("BAD SMELL (" + cl.getNameAsString() + ") - is a Data Class");
         }
         System.out.println(isDataClass);
