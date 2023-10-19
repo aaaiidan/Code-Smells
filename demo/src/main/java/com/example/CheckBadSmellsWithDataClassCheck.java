@@ -167,7 +167,7 @@ public class CheckBadSmells {
                     isDataClass = false;
                 }
 
-                if((statement instanceof IfStmt) || (statement instanceof ForStmt) || (statement instanceof WhileStmt) || (statement instanceof ForEachStatement){
+                if(!(statement instanceof ReturnStmt) || !(statement instanceof ExpressionStmt)){
                     hasComplexLogic = true;
                     isDataClass = false;
                 }else{
@@ -175,7 +175,7 @@ public class CheckBadSmells {
                     if(!methodsNames.contains(m.getNameAsString())){
                         methodsNames.add(m.getNameAsString());
                     }
-                } //The code might actually work better without the complexity check and rather with just the expression statements and return statements.
+                } 
             }
         }
 
