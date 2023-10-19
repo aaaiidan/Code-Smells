@@ -46,6 +46,7 @@ public class Analyser {
         checker.longMethodEasy();
         checker.longMethodMedium();
         checker.longClassMedium();
+        checker.messageChain();
 
 
         /*
