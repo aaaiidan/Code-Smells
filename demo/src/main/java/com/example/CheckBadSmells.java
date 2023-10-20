@@ -7,8 +7,11 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.FieldAccessExpr;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.VariableDeclarationExpr;
-import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.stmt.*;
 
 import java.io.FileInputStream;
@@ -16,12 +19,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.print.attribute.standard.MediaSize.NA;
 import javax.swing.plaf.nimbus.State;
 
 public class CheckBadSmells {
     ArrayList<ClassOrInterfaceDeclaration> allClasses = new ArrayList<>();
     ArrayList<MethodDeclaration> allMethods = new ArrayList<>();
     ArrayList<VariableDeclarator> allGlobalFields = new ArrayList<>();
+    ArrayList<MethodCallExpr> allMethodCalls = new ArrayList<>();
 
     public void addDeclaration(ClassOrInterfaceDeclaration c){
         allClasses.add(c);
@@ -33,6 +38,10 @@ public class CheckBadSmells {
 
     public void addDeclaration(VariableDeclarator c){
         allGlobalFields.add(c);
+    }
+
+    public void addDeclaration(MethodCallExpr c){
+        allMethodCalls.add(c);
     }
 
     public void largeClassEasy(){
@@ -114,7 +123,7 @@ public class CheckBadSmells {
             for(Node node : c.getChildNodes()){
                 if(node instanceof Statement || node instanceof FieldDeclaration){
                     statementC++;
-                    //System.out.println(node + " - " + statementC);
+                    System.out.println(node + " - " + statementC);
                     statementC = childChecker(node, statementC);
                 } else if(node instanceof MethodDeclaration || node instanceof ClassOrInterfaceDeclaration || node instanceof ConstructorDeclaration){
                     statementC = childChecker(node, statementC);
@@ -123,26 +132,35 @@ public class CheckBadSmells {
            if(statementC > 100){
                 System.out.println("BAD SMELL ("+ c.getNameAsString() +") - Long Class (medium)");
             }
-
         }
     }
 
-    public void messageChain() {
-        for (MethodDeclaration m : allMethods) {
-            int messageChainLength = getMessageChainLength(m.getBody().get(), 0);
-            if (messageChainLength > 2) {
-                System.out.println("BAD SMELL (" + m.getNameAsString() + ") - Message Chain");
-            }
+    public void messageChain2(){
+        for (MethodCallExpr m : allMethodCalls) {
+            int chainC = 0;
+            if (messageChainLength(m, chainC) > 1){
+                System.out.println("BAD SMELL (" + m.toString() +")");
+        }
         }
     }
 
-    private int getMessageChainLength(Node node, int chainC) {
-        if (node instanceof MethodCallExpr) {
+    private int messageChainLength(MethodCallExpr m, int chainC){
+        if(m.getScope().get().isMethodCallExpr()){
             chainC++;
-        }
-        for (Node child : node.getChildNodes()) {
-            chainC = getMessageChainLength(child, chainC);
+            chainC = messageChainLength((MethodCallExpr) m.getScope().get(), chainC);
         }
         return chainC;
     }
+/* 
+    public void refusedBequest(){
+        for (ClassOrInterfaceDeclaration c : allClasses) {
+            for (ClassOrInterfaceType extendedClass : c.getExtendedTypes()) {
+                System.out.println(c.getNameAsString() + " extends " + extendedClass);
+                for (MethodDeclaration ex : (ClassOrInterfaceDeclaration) extendedClass) {
+                    
+                }
+            }
+        }
+    }
+    */
 }
