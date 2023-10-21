@@ -1,5 +1,7 @@
 package com.example;
 
+import java.util.ArrayList;
+
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -9,24 +11,31 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 public class CheckBadSmells2{
 
+    VoidVisitorAdapter<?> getNameOfClass = new getNameOfClass();
     VoidVisitorAdapter<?> lcs = new LargeClassEasy();
     VoidVisitorAdapter<?> lme = new LongMethodEasy();
     VoidVisitorAdapter<?> lpl = new LongParameterList();
     VoidVisitorAdapter<?> lmm = new LongMethodMedium();
     VoidVisitorAdapter<?> lcm = new LongClassMedium();
     VoidVisitorAdapter<?> mc = new MessageChain();
+    VoidVisitorAdapter<ArrayList<CompilationUnit>> rb = new RefusedBequest();
 
-    public void run(CompilationUnit cu){
+
+    public void run(CompilationUnit cu, ArrayList<CompilationUnit> ASTs){
+
+        getNameOfClass.visit(cu, null);
         lcs.visit(cu, null);
         lme.visit(cu, null);
         lpl.visit(cu, null);
         lmm.visit(cu, null);
         lcm.visit(cu, null);
         mc.visit(cu, null);
+        rb.visit(cu, ASTs);
     }
 
     private static class LargeClassEasy extends VoidVisitorAdapter{
@@ -115,7 +124,7 @@ public class CheckBadSmells2{
             for(Node node : c.getChildNodes()){
                 if(node instanceof Statement || node instanceof FieldDeclaration){
                     statementC++;
-                    System.out.println(node + " - " + statementC);
+                    //System.out.println(node + " - " + statementC);
                     statementC = childChecker(node, statementC);
                 } else if(node instanceof MethodDeclaration || node instanceof ClassOrInterfaceDeclaration || node instanceof ConstructorDeclaration){
                     statementC = childChecker(node, statementC);
@@ -147,17 +156,52 @@ public class CheckBadSmells2{
         public void visit(MethodCallExpr m, Object arg){
             int chainC = 0;
             if (messageChainLength(m, chainC) > 1){
-                System.out.println("BAD SMELL (" + m.toString() +")");
+                System.out.println("BAD SMELL ( " + m.toString() +" ) - Message Chain");
             }
             super.visit(m, arg);
         }
 
         private int messageChainLength(MethodCallExpr m, int chainC){
-            if(m.getScope().get().isMethodCallExpr()){
+            if(m.getScope().isPresent() &&  m.getScope().get().isMethodCallExpr()){
                 chainC++;
                 chainC = messageChainLength((MethodCallExpr) m.getScope().get(), chainC);
             }
             return chainC;
+        }
+    }
+
+    private static class RefusedBequest extends VoidVisitorAdapter<ArrayList<CompilationUnit>>{
+
+        @Override
+        public void visit(ClassOrInterfaceDeclaration c, ArrayList<CompilationUnit> ASTs){
+            for (ClassOrInterfaceType extendedClass : c.getExtendedTypes()){
+                //System.out.println(c.getNameAsString() + " extends " + extendedClass);
+                ArrayList<MethodDeclaration> subClassMethods = new ArrayList<>();
+                for (MethodDeclaration method : c.getMethods()) {
+                    subClassMethods.add(method);
+                }
+                for (CompilationUnit cu : ASTs) {
+                    //System.out.println(extendedClass.asString());
+                    if(cu.getClassByName(extendedClass.getNameAsString()).isPresent()){
+                        if (!subClassMethods.containsAll(cu.getClassByName(extendedClass.getNameAsString()).get().getMethods())){
+                            System.out.println("BAD SMELL (" + c.getNameAsString() + " extends " + extendedClass.getNameAsString() +") - RefusedBequest");
+                        }
+                    }
+                }
+            }
+                
+            
+            super.visit(c, ASTs);
+        }
+    }
+
+    private static class getNameOfClass extends VoidVisitorAdapter{
+
+        @Override
+        public void visit(ClassOrInterfaceDeclaration c, Object args){
+            System.out.println();
+            System.out.println("---------- " + c.getNameAsString() + " ----------");
+            System.out.println();
         }
     }
 }
