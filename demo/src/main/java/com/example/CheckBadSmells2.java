@@ -1,6 +1,7 @@
 package com.example;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
@@ -8,8 +9,12 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.VariableDeclarationExpr;
 import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
+import com.github.javaparser.ast.stmt.ReturnStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -23,19 +28,21 @@ public class CheckBadSmells2{
     VoidVisitorAdapter<?> lmm = new LongMethodMedium();
     VoidVisitorAdapter<?> lcm = new LongClassMedium();
     VoidVisitorAdapter<?> mc = new MessageChain();
+    VoidVisitorAdapter<?> dc = new DataClass();
     VoidVisitorAdapter<ArrayList<CompilationUnit>> rb = new RefusedBequest();
 
 
     public void run(CompilationUnit cu, ArrayList<CompilationUnit> ASTs){
 
         getNameOfClass.visit(cu, null);
-        lcs.visit(cu, null);
-        lme.visit(cu, null);
-        lpl.visit(cu, null);
-        lmm.visit(cu, null);
-        lcm.visit(cu, null);
-        mc.visit(cu, null);
-        rb.visit(cu, ASTs);
+       // lcs.visit(cu, null);
+       // lme.visit(cu, null);
+        //lpl.visit(cu, null);
+        //lmm.visit(cu, null);
+        //lcm.visit(cu, null);
+        //mc.visit(cu, null);
+        dc.visit(cu, null);
+        //rb.visit(cu, ASTs);
     }
 
     private static class LargeClassEasy extends VoidVisitorAdapter{
@@ -167,6 +174,51 @@ public class CheckBadSmells2{
                 chainC = messageChainLength((MethodCallExpr) m.getScope().get(), chainC);
             }
             return chainC;
+        }
+    }
+
+    private static class DataClass extends VoidVisitorAdapter{
+
+        @Override
+        public void visit(ClassOrInterfaceDeclaration c, Object arg){
+            boolean isDataClass = true;
+            ArrayList<VariableDeclarator> globalFields = new ArrayList<>();
+            for (FieldDeclaration field : c.getFields()) {
+                for (VariableDeclarator v : field.getVariables()) {
+                    globalFields.add(v);
+                    //System.out.println(v);
+                }
+             }
+
+            for(MethodDeclaration m : c.getMethods()){
+                for(Statement statement : m.getBody().get().getStatements()){
+                    if(statement.isReturnStmt()){
+                        ReturnStmt returnStmt = (ReturnStmt) statement;
+                        for (VariableDeclarator v : globalFields) {
+                            if(returnStmt.getExpression().get().toString().contains(v.getNameAsString())){
+                                isDataClass = true;
+                            }
+                        }
+                    } else if(statement.isExpressionStmt()){
+                        ExpressionStmt expressionStmt = (ExpressionStmt) statement;
+                        for (VariableDeclarator v : globalFields) {
+                            if(expressionStmt.toString().contains(v.getNameAsString())){
+                                isDataClass = true;
+                            }
+                        }
+                    } else {
+                        isDataClass = false;
+                    }
+                }
+
+                if(!isDataClass){
+                    break;
+                }
+            }
+
+            if(isDataClass){
+                System.out.println("DATA CLASS");
+            }
         }
     }
 

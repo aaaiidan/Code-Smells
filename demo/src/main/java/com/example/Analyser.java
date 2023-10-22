@@ -20,7 +20,7 @@ public class Analyser {
     static ArrayList<CompilationUnit> ASTs = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        String folderDir = "test_classes\\Abusers\\RefusedBequest";
+        String folderDir = "test_classes\\Bloaters";
         Stream<Path> files = Files.walk(Paths.get(folderDir), FileVisitOption.FOLLOW_LINKS).filter(path -> path.toString().endsWith(".java"));
     
         files.forEach(file -> {

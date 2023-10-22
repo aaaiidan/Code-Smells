@@ -151,16 +151,4 @@ public class CheckBadSmells {
         }
         return chainC;
     }
-/* 
-    public void refusedBequest(){
-        for (ClassOrInterfaceDeclaration c : allClasses) {
-            for (ClassOrInterfaceType extendedClass : c.getExtendedTypes()) {
-                System.out.println(c.getNameAsString() + " extends " + extendedClass);
-                for (MethodDeclaration ex : (ClassOrInterfaceDeclaration) extendedClass) {
-                    
-                }
-            }
-        }
-    }
-    */
 }
