@@ -2,8 +2,6 @@ package com.example;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,18 +10,19 @@ import java.util.ArrayList;
 import java.util.stream.Stream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Analyser {
-    static CheckBadSmells2 checker = new CheckBadSmells2();
+    static CheckBadSmells checker = new CheckBadSmells();
     static ArrayList<CompilationUnit> ASTs = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        String folderDir = "test_classes\\Bloaters";
-        Stream<Path> files = Files.walk(Paths.get(folderDir), FileVisitOption.FOLLOW_LINKS).filter(path -> path.toString().endsWith(".java"));
-    
-        files.forEach(file -> {
+        String folderDir = "test_classes";
+        try {
+            Stream<Path> files = Files.walk(Paths.get(folderDir), FileVisitOption.FOLLOW_LINKS).filter(path -> path.toString().endsWith(".java"));
+            files.forEach(file -> {
             CompilationUnit cu;
             try {
                 cu = StaticJavaParser.parse(new FileInputStream(String.valueOf(file)));
@@ -32,7 +31,12 @@ public class Analyser {
                 e.printStackTrace();;
             }
         });
-     
+        } catch (NoSuchFileException e) {
+            System.err.println("Error - Folder Not Found ");
+        } catch (IOException e) {
+            System.err.println("Error - Folder Not Found");
+        }
+
         for (CompilationUnit cu : ASTs) {
             checker.run(cu, ASTs);
         }   
