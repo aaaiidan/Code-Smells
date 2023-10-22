@@ -35,14 +35,15 @@ public class CheckBadSmells2{
     public void run(CompilationUnit cu, ArrayList<CompilationUnit> ASTs){
 
         getNameOfClass.visit(cu, null);
-       // lcs.visit(cu, null);
-       // lme.visit(cu, null);
-        //lpl.visit(cu, null);
-        //lmm.visit(cu, null);
-        //lcm.visit(cu, null);
-        //mc.visit(cu, null);
+        lcs.visit(cu, null);
+        lme.visit(cu, null);
+        lpl.visit(cu, null);
+        lmm.visit(cu, null);
+        lcm.visit(cu, null);
+        mc.visit(cu, null);
         dc.visit(cu, null);
-        //rb.visit(cu, ASTs);
+        rb.visit(cu, ASTs);
+     
     }
 
     private static class LargeClassEasy extends VoidVisitorAdapter{
@@ -181,7 +182,7 @@ public class CheckBadSmells2{
 
         @Override
         public void visit(ClassOrInterfaceDeclaration c, Object arg){
-            boolean isDataClass = true;
+            boolean isDataClass = false;
             ArrayList<VariableDeclarator> globalFields = new ArrayList<>();
             for (FieldDeclaration field : c.getFields()) {
                 for (VariableDeclarator v : field.getVariables()) {
@@ -190,25 +191,42 @@ public class CheckBadSmells2{
                 }
              }
 
-            for(MethodDeclaration m : c.getMethods()){
-                for(Statement statement : m.getBody().get().getStatements()){
-                    if(statement.isReturnStmt()){
-                        ReturnStmt returnStmt = (ReturnStmt) statement;
-                        for (VariableDeclarator v : globalFields) {
-                            if(returnStmt.getExpression().get().toString().contains(v.getNameAsString())){
-                                isDataClass = true;
-                            }
-                        }
-                    } else if(statement.isExpressionStmt()){
-                        ExpressionStmt expressionStmt = (ExpressionStmt) statement;
+            for (ConstructorDeclaration constuctor : c.getConstructors()) {
+                for(Statement st : constuctor.getBody().getStatements()){
+                    if(st.isExpressionStmt()){
+                        ExpressionStmt expressionStmt = (ExpressionStmt) st;
                         for (VariableDeclarator v : globalFields) {
                             if(expressionStmt.toString().contains(v.getNameAsString())){
                                 isDataClass = true;
                             }
                         }
-                    } else {
-                        isDataClass = false;
                     }
+                }
+            }
+            for(MethodDeclaration m : c.getMethods()){
+                if(m.getBody().get().getStatements().size() == 1){
+                    for(Statement statement : m.getBody().get().getStatements()){
+                        if(statement.isReturnStmt()){
+                            ReturnStmt returnStmt = (ReturnStmt) statement;
+                            for (VariableDeclarator v : globalFields) {
+                                if(returnStmt.getExpression().get().toString().contains(v.getNameAsString())){
+                                    isDataClass = true;
+                                }
+                            }
+                        } else if(statement.isExpressionStmt() && m.getParameters().size() == 1){
+                            ExpressionStmt expressionStmt = (ExpressionStmt) statement;
+                            for (VariableDeclarator v : globalFields) {
+                                if(expressionStmt.toString().contains(v.getNameAsString())){
+                                    isDataClass = true;
+                                }
+                            }
+                        } else {
+                            isDataClass = false;
+                        }
+                    }
+                } else {
+                    isDataClass = false;
+                    break;
                 }
 
                 if(!isDataClass){
@@ -217,8 +235,9 @@ public class CheckBadSmells2{
             }
 
             if(isDataClass){
-                System.out.println("DATA CLASS");
+                System.out.println("BAD SMELL ("+ c.getNameAsString() +") - Data Class");
             }
+            super.visit(c, arg);
         }
     }
 
@@ -252,7 +271,7 @@ public class CheckBadSmells2{
         @Override
         public void visit(ClassOrInterfaceDeclaration c, Object args){
             System.out.println();
-            System.out.println("---------- " + c.getNameAsString() + " ----------");
+            System.out.println("---------- " + c.getNameAsString() + ".java ----------");
             System.out.println();
         }
     }
