@@ -30,7 +30,6 @@ public class CheckBadSmells{
     VoidVisitorAdapter<?> dc = new DataClass();
     VoidVisitorAdapter<ArrayList<CompilationUnit>> rb = new RefusedBequest();
 
-
     public void run(CompilationUnit cu, ArrayList<CompilationUnit> ASTs){
 
         getNameOfClass.visit(cu, null);
@@ -158,12 +157,18 @@ public class CheckBadSmells{
     }
 
     private static class MessageChain extends VoidVisitorAdapter{
+        int callCounter = 0;
 
         @Override
         public void visit(MethodCallExpr m, Object arg){
-            int chainC = 0;
-            if (messageChainLength(m, chainC) > 1){
-                System.out.println("BAD SMELL ( " + m.toString() +" ) - Message Chain");
+            int chainC = 1;
+            if(callCounter == 0) {
+                if (messageChainLength(m, chainC) > 1){
+                    callCounter = messageChainLength(m, chainC) - 1;
+                    System.out.println("BAD SMELL ( " + m.toString() +" ) - Message Chain");
+                }
+            } else {
+                callCounter--;
             }
             super.visit(m, arg);
         }

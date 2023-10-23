@@ -19,7 +19,7 @@ public class Analyser {
     static ArrayList<CompilationUnit> ASTs = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
-        String folderDir = "test_classes";
+        String folderDir = "test_classes\\Couplers\\MessageChains";
         try {
             Stream<Path> files = Files.walk(Paths.get(folderDir), FileVisitOption.FOLLOW_LINKS).filter(path -> path.toString().endsWith(".java"));
             files.forEach(file -> {
